@@ -24,7 +24,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
 
   // @ts-ignore private
   conn.sendMsg(conn.createMsg(expectedDocId, fromJS(expectedClock)));
-  expect(sendMsg.mock.calls[0][0]).toEqual({
+  expect(sendMsg.mock.calls[0][1]).toEqual({
     clock: expectedClock,
     docId: expectedDocId
   });
@@ -37,7 +37,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
     // @ts-ignore private
     conn.createMsg(expectedDocId, fromJS(expectedClock), expectedChanges)
   );
-  expect(sendMsg.mock.calls[1][0]).toEqual({
+  expect(sendMsg.mock.calls[1][1]).toEqual({
     clock: expectedClock,
     docId: expectedDocId,
     changes: expectedChanges
@@ -59,7 +59,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
 
   // @ts-ignore private
   conn.sendMsg(conn.createMsg(expectedDocId, fromJS(expectedClock)));
-  expect(sendMsg.mock.calls[0][0]).toEqual({
+  expect(sendMsg.mock.calls[0][1]).toEqual({
     clock: expectedClock,
     docId: expectedDocId
   });
@@ -72,7 +72,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
     // @ts-ignore private
     conn.createMsg(expectedDocId, fromJS(expectedClock), expectedChanges)
   );
-  expect(sendMsg.mock.calls[1][0]).toEqual({
+  expect(sendMsg.mock.calls[1][1]).toEqual({
     clock: expectedClock,
     docId: expectedDocId,
     changes: expectedChanges

@@ -22,7 +22,7 @@ export interface AsyncDocStore {
 // for many documents to be multiplexed over a single connection.
 export class Connection {
   private _docStore: AsyncDocStore;
-  private _sendMsg: (msg: Message, peerId: string) => void;
+  private _sendMsg: (peerId: string, msg: Message) => void;
   private _ourClockMap: Map<string, Clock>;
 
   // A map of a peerId to a ClockMap, which is
@@ -35,7 +35,7 @@ export class Connection {
     store: AsyncDocStore;
 
     // The function we use to broadcast messages to the network.
-    sendMsg: (msg: Message, peerId: string) => void;
+    sendMsg: (peerId: string, msg: Message) => void;
   }) {
     this._docStore = params.store;
     this._sendMsg = params.sendMsg;
@@ -121,7 +121,7 @@ export class Connection {
 
   private sendMsg(msg: Message, peerId?: string) {
     this.updateOurClock(msg.docId, msg.clock);
-    this._sendMsg(msg, peerId);
+    this._sendMsg(peerId, msg);
   }
 
   private updateOurClock(docId: string, clock: Map<string, any>) {

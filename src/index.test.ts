@@ -21,7 +21,7 @@ test("docChange can call sendMsg with initalizing changes", async () => {
   // It calls send message
   expect(calls.length).toBe(1);
 
-  const msg = calls[0][0];
+  const msg = calls[0][1];
 
   // Appears to be a legit message
   expect(Object.keys(msg)).toEqual(["docId", "clock", "changes"]);
@@ -56,7 +56,7 @@ test("Receiving an empty clock with a doc id we know about will trigger this cli
   const calls = sendMsg.mock.calls;
   expect(calls.length).toBe(1);
 
-  const msg = calls[0][0];
+  const msg = calls[0][1];
 
   // We have some changes
   expect(msg.changes).toBeTruthy();
