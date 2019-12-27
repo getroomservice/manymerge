@@ -11,7 +11,10 @@ import { mockDocStore } from "./testUtil";
 
 test("sendMsg assembles a message and calles the user provided fn", () => {
   const sendMsg = jest.fn();
-  const conn = new Connection(mockDocStore({}), sendMsg);
+  const conn = new Connection({
+    store: mockDocStore({}),
+    sendMsg
+  });
 
   /** Without changes */
   const expectedDocId = "my-doc-id";
@@ -20,7 +23,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
   };
 
   // @ts-ignore private
-  conn.sendMsg(expectedDocId, fromJS(expectedClock));
+  conn.sendMsg(conn.createMsg(expectedDocId, fromJS(expectedClock)));
   expect(sendMsg.mock.calls[0][0]).toEqual({
     clock: expectedClock,
     docId: expectedDocId
@@ -30,7 +33,10 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
   const expectedChanges = [{ pretendTheseAre: "changes" }];
 
   // @ts-ignore private
-  conn.sendMsg(expectedDocId, fromJS(expectedClock), expectedChanges);
+  conn.sendMsg(
+    // @ts-ignore private
+    conn.createMsg(expectedDocId, fromJS(expectedClock), expectedChanges)
+  );
   expect(sendMsg.mock.calls[1][0]).toEqual({
     clock: expectedClock,
     docId: expectedDocId,
@@ -40,7 +46,10 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
 
 test("sendMsg assembles a message and calles the user provided fn", () => {
   const sendMsg = jest.fn();
-  const conn = new Connection(mockDocStore({}), sendMsg);
+  const conn = new Connection({
+    store: mockDocStore({}),
+    sendMsg
+  });
 
   /** Without changes */
   const expectedDocId = "my-doc-id";
@@ -49,7 +58,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
   };
 
   // @ts-ignore private
-  conn.sendMsg(expectedDocId, fromJS(expectedClock));
+  conn.sendMsg(conn.createMsg(expectedDocId, fromJS(expectedClock)));
   expect(sendMsg.mock.calls[0][0]).toEqual({
     clock: expectedClock,
     docId: expectedDocId
@@ -59,7 +68,10 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
   const expectedChanges = [{ pretendTheseAre: "changes" }];
 
   // @ts-ignore private
-  conn.sendMsg(expectedDocId, fromJS(expectedClock), expectedChanges);
+  conn.sendMsg(
+    // @ts-ignore private
+    conn.createMsg(expectedDocId, fromJS(expectedClock), expectedChanges)
+  );
   expect(sendMsg.mock.calls[1][0]).toEqual({
     clock: expectedClock,
     docId: expectedDocId,
@@ -73,7 +85,10 @@ test("applyChanges properly updates a doc and calls the docSet", async () => {
     alpha
   });
 
-  const conn = new Connection(store, jest.fn());
+  const conn = new Connection({
+    store,
+    sendMsg: jest.fn()
+  });
 
   // Make change
   const newAlpha = change(alpha, doc => {

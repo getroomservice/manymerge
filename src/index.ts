@@ -22,7 +22,7 @@ export interface AsyncDocStore {
 // for many documents to be multiplexed over a single connection.
 export class Connection {
   private _docStore: AsyncDocStore;
-  private _sendMsg: (msg: Message, peerId?: string) => void;
+  private _sendMsg: (msg: Message, peerId: string) => void;
   private _ourClockMap: Map<string, Clock>;
 
   // A map of a peerId to a ClockMap, which is
@@ -35,12 +35,21 @@ export class Connection {
     store: AsyncDocStore;
 
     // The function we use to broadcast messages to the network.
-    sendMsg: (msg: Message, peerId?: string) => void;
+    sendMsg: (msg: Message, peerId: string) => void;
   }) {
     this._docStore = params.store;
     this._sendMsg = params.sendMsg;
     this._ourClockMap = Map();
     this._theirClockMaps = Map();
+  }
+
+  // Manually adds a peer that we should talk to
+  addPeer(peerId: string) {
+    if (this._theirClockMaps.has(peerId)) {
+      return; // do nothing if we already have this peer
+    }
+
+    this._theirClockMaps = this._theirClockMaps.set(peerId, Map({}));
   }
 
   // manually call this when you want to change the document on the network.
@@ -62,7 +71,7 @@ export class Connection {
   }
 
   async receiveMsg(peerId: string, msg: Message) {
-    if (!peerId || typeof peerId === "string") {
+    if (!peerId || typeof peerId !== "string") {
       throw new Error(`receiveMsg got a peerId that's not a string`);
     }
 
@@ -135,7 +144,7 @@ export class Connection {
   // Syncs document with everyone.
   private async syncDoc(docId: string) {
     for (let peerId of this._theirClockMaps.keys()) {
-      this.maybeSyncDocWithPeer(peerId, docId);
+      await this.maybeSyncDocWithPeer(peerId, docId);
     }
   }
 
@@ -146,7 +155,7 @@ export class Connection {
 
     const changes = Backend.getMissingChanges(
       state,
-      this._theirClockMaps.get(theirPeerId).get(docId)
+      this._theirClockMaps.get(theirPeerId).get(docId, Map() as Clock)
     );
 
     // if we have changes we need to sync, do so.

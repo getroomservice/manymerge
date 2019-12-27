@@ -6,8 +6,7 @@
   "license": "MIT",
   "scripts": {
     "build": "tsc",
-    "test": "jest",
-    "prepublish": "tsc"
+    "test": "jest"
   },
   "files": [
     "/dist"
