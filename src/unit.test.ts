@@ -109,3 +109,66 @@ test("applyChanges properly updates a doc and calls the docSet", async () => {
     ]
   ]);
 });
+
+test("addPeer adds something to _theirClockMaps", () => {
+  const store = mockDocStore({
+    alpha: from({ name: "alpha" })
+  });
+
+  const conn = new Connection({
+    store,
+    sendMsg: jest.fn()
+  });
+
+  conn.addPeer("my-peer-id");
+
+  // @ts-ignore private
+  const map = conn._theirClockMaps.get("my-peer-id");
+  expect(map).toBeTruthy();
+});
+
+test("receiveMsg updates _theirClockMaps", async () => {
+  const store = mockDocStore({
+    alpha: from({ name: "alpha" })
+  });
+
+  const conn = new Connection({
+    store,
+    sendMsg: jest.fn()
+  });
+
+  conn.addPeer("my-peer-id");
+  await conn.receiveMsg("my-peer-id", {
+    // @ts-ignore it's a clock I swear
+    clock: {
+      "some-actor-id": 1
+    },
+    docId: "my-doc-id"
+  });
+
+  // @ts-ignore private
+  const map = conn._theirClockMaps.get("my-peer-id");
+  expect(map.get("my-doc-id").get("some-actor-id")).toBe(1);
+});
+
+test("maybeSyncDocWithPeer updates _theirClockMaps before we send the message", async () => {
+  const sendMsg = jest.fn();
+  const store = mockDocStore({
+    alpha: from({ name: "alpha" })
+  });
+  const conn = new Connection({
+    store,
+    sendMsg
+  });
+
+  conn.addPeer("my-peer-id");
+
+  // @ts-ignore private
+  expect(conn._theirClockMaps.get("my-peer-id").size).toBe(0);
+
+  // @ts-ignore private
+  await conn.maybeSyncDocWithPeer("my-peer-id", "alpha");
+
+  // @ts-ignore private
+  expect(conn._theirClockMaps.get("my-peer-id").size).toBe(1);
+});

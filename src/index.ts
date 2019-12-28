@@ -76,7 +76,7 @@ export class Connection {
     }
 
     if (msg.clock) {
-      this._theirClockMaps.set(
+      this._theirClockMaps = this._theirClockMaps.set(
         peerId,
         clockUnion(
           this._theirClockMaps.get(peerId),
@@ -160,7 +160,7 @@ export class Connection {
 
     // if we have changes we need to sync, do so.
     if (changes.length > 0) {
-      this._theirClockMaps.set(
+      this._theirClockMaps = this._theirClockMaps.set(
         theirPeerId,
         clockUnion(this._theirClockMaps.get(theirPeerId), docId, clock)
       );
