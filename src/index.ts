@@ -92,7 +92,9 @@ export class Connection {
       );
     }
     if (msg.changes) {
-      return this.applyChanges(msg.docId, fromJS(msg.changes));
+      await this.applyChanges(msg.docId, fromJS(msg.changes));
+      console.log(msg.docId);
+      return this.syncDoc(msg.docId);
     }
 
     if (await this._docStore.getDoc(msg.docId)) {

@@ -21,6 +21,9 @@ interface TestMessage {
   msg: Message;
 }
 
+// Creates a scenario where given some changes to the docSet on the
+// automerge side, we get the resulting messages sent back and forth
+// between the clients and the state of the two clients.
 async function scenario(
   cb: (docSet: DocSet<any>) => any
 ): Promise<{
@@ -95,7 +98,7 @@ describe("with connection", () => {
       docSet.setDoc("some-doc", from({ name: "hey" }));
     });
 
-    expect(msgs.length).toBe(3);
+    expect(msgs.length).toBe(4);
 
     // Automerge tells ManyMerge about it's new document
     let msg = msgs[0];
@@ -118,17 +121,90 @@ describe("with connection", () => {
     expect(msg.msg.changes[0].seq).toBe(1);
   });
 
-  it("automerge's clock should be the same as manymerge's clock", async () => {
-    const { manyMergeConnection, automergeConnection } = await scenario(
+  it("automerge's ourClock should be the same as manymerge's theirClock", async () => {
+    const { manyMergeConnection, automergeConnection, msgs } = await scenario(
       docSet => {
         docSet.setDoc("some-doc", from({ name: "hey" }));
       }
     );
 
+    expect(msgs.length).toBe(4);
+
     // @ts-ignore
-    expect(automergeConnection._ourClock).toEqual(
+    expect(JSON.stringify(automergeConnection._ourClock)).toEqual(
       // @ts-ignore
-      manyMergeConnection._ourClockMap
+      JSON.stringify(manyMergeConnection._theirClockMaps.get("my-peer"))
     );
+  });
+});
+
+interface TestMessageWithPeer {
+  to: "manymerge" | "automerge";
+  peer?: string;
+  msg: Message;
+}
+
+describe("with multiple peers", () => {
+  it("should send messages to all peers", done => {
+    const events = new Emitter();
+
+    // Setup two automerge connections
+    const {
+      automergeConnection: alphaConn,
+      docSet: alphaDocSet
+    } = mockAutomergeConnectionWithDocSet(msg => {
+      events.emit("to-manymerge", "alpha", JSON.stringify(msg));
+    });
+    const {
+      automergeConnection: betaConn,
+      docSet: betaDocSet
+    } = mockAutomergeConnectionWithDocSet(msg => {
+      events.emit("to-manymerge", "beta", JSON.stringify(msg));
+    });
+
+    // Setup the manymerge connection
+    const sendMsgToAutomerge = (peer, msg) => {
+      events.emit("to-automerge", peer, JSON.stringify(msg));
+    };
+    const store = mockDocStore({});
+    const manyMerge = new ManyMergeConnection({
+      store,
+      sendMsg: sendMsgToAutomerge
+    });
+    const msgs: TestMessageWithPeer[] = [];
+    events.on("to-manymerge", async (peer, msg) => {
+      msgs.push({
+        to: "manymerge",
+        msg: JSON.parse(msg)
+      });
+      await manyMerge.receiveMsg(peer, JSON.parse(msg));
+    });
+
+    // Connect manymerge to it's two peers
+    manyMerge.addPeer("alpha");
+    manyMerge.addPeer("beta");
+    events.on("to-automerge", async (peer, msg) => {
+      msgs.push({
+        to: "automerge",
+        peer,
+        msg: JSON.parse(msg)
+      });
+
+      if (peer === "alpha") {
+        alphaConn.receiveMsg(JSON.parse(msg));
+      } else if (peer === "beta") {
+        betaConn.receiveMsg(JSON.parse(msg));
+      } else {
+        throw new Error("Received unexpected peer, this test is probs broken");
+      }
+    });
+
+    // Test to see if alpha's changes get populated to beta via manymerge
+    alphaDocSet.setDoc("our-doc", from({ name: "cool-doc" }));
+
+    setTimeout(() => {
+      console.log(msgs);
+      done();
+    }, 10);
   });
 });
