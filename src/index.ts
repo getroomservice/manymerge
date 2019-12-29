@@ -93,7 +93,6 @@ export class Connection {
     }
     if (msg.changes) {
       await this.applyChanges(msg.docId, fromJS(msg.changes));
-      console.log(msg.docId);
       return this.syncDoc(msg.docId);
     }
 

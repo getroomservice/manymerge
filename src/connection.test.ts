@@ -203,7 +203,35 @@ describe("with multiple peers", () => {
     alphaDocSet.setDoc("our-doc", from({ name: "cool-doc" }));
 
     setTimeout(() => {
-      console.log(msgs);
+      expect(msgs.length).toBe(6);
+
+      // 0. Alpha tells ManyMerge it has a document
+      expect(msgs[0].to).toBe("manymerge");
+      expect(msgs[0].msg.changes).toBeFalsy();
+
+      // 1. ManyMerge tells Alpha it needs updating
+      expect(msgs[1].to).toBe("automerge");
+      expect(msgs[1].msg.clock).toEqual({});
+      expect(msgs[1].peer).toBe("alpha");
+
+      // 2. Alpha tells ManyMerge about the changes
+      expect(msgs[2].to).toBe("manymerge");
+      expect(msgs[2].msg.changes).toBeTruthy();
+
+      // 3. Manymerge syncs with alpha
+      expect(msgs[3].peer).toBe("alpha");
+      // We don't send changes since we just received this
+      // from alpha. This is a bit redundant, but it's fine
+      expect(msgs[3].msg.changes).toBeFalsy();
+
+      // 4. Manymerge syncs with beta, who does not know about the doc
+      expect(msgs[4].peer).toBe("beta");
+      expect(msgs[4].msg.changes).toBeTruthy();
+
+      // 5. Beta's automerge client broadcasts it's updated clock
+      expect(msgs[5].to).toBe("manymerge");
+      expect(msgs[5].msg.changes).toBeFalsy();
+
       done();
     }, 10);
   });
