@@ -18,11 +18,17 @@
   },
   "devDependencies": {
     "@types/jest": "^24.0.24",
+    "@types/node": "^13.1.1",
     "automerge": "^0.12.1",
+    "events": "^3.0.0",
     "immutable": "^4.0.0-rc.12",
     "jest": "^24.9.0",
     "ts-jest": "^24.2.0",
     "typescript": "^3.7.4"
   },
-  "types": "dist/index.d.ts"
+  "types": "dist/index.d.ts",
+  "dependencies": {
+    "@types/events": "^3.0.0",
+    "invariant": "^2.2.4"
+  }
 }

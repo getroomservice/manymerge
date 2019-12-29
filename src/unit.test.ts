@@ -23,7 +23,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
   };
 
   // @ts-ignore private
-  conn.sendMsg(conn.createMsg(expectedDocId, fromJS(expectedClock)));
+  conn.sendMsg("s", conn.createMsg(expectedDocId, fromJS(expectedClock)));
   expect(sendMsg.mock.calls[0][1]).toEqual({
     clock: expectedClock,
     docId: expectedDocId
@@ -34,6 +34,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
 
   // @ts-ignore private
   conn.sendMsg(
+    "s",
     // @ts-ignore private
     conn.createMsg(expectedDocId, fromJS(expectedClock), expectedChanges)
   );
@@ -58,7 +59,11 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
   };
 
   // @ts-ignore private
-  conn.sendMsg(conn.createMsg(expectedDocId, fromJS(expectedClock)));
+  conn.sendMsg(
+    "some-peer",
+    // @ts-ignore private
+    conn.createMsg(expectedDocId, fromJS(expectedClock))
+  );
   expect(sendMsg.mock.calls[0][1]).toEqual({
     clock: expectedClock,
     docId: expectedDocId
@@ -69,6 +74,7 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
 
   // @ts-ignore private
   conn.sendMsg(
+    "some-peer",
     // @ts-ignore private
     conn.createMsg(expectedDocId, fromJS(expectedClock), expectedChanges)
   );
@@ -151,7 +157,7 @@ test("receiveMsg updates _theirClockMaps", async () => {
   expect(map.get("my-doc-id").get("some-actor-id")).toBe(1);
 });
 
-test("maybeSyncDocWithPeer updates _theirClockMaps before we send the message", async () => {
+test("maybeSyncDocWithPeer updates _theirClockMaps and _ourClockMap before we send the message", async () => {
   const sendMsg = jest.fn();
   const store = mockDocStore({
     alpha: from({ name: "alpha" })
@@ -171,4 +177,7 @@ test("maybeSyncDocWithPeer updates _theirClockMaps before we send the message", 
 
   // @ts-ignore private
   expect(conn._theirClockMaps.get("my-peer-id").size).toBe(1);
+
+  // @ts-ignore private
+  expect(conn._ourClockMap.get("alpha").size).toBe(1);
 });

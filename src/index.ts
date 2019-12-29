@@ -1,5 +1,6 @@
 import { Backend, Change, Clock, Doc, Frontend, Message } from "automerge";
 import { fromJS, Map } from "immutable";
+import * as invariant from "invariant";
 import lessOrEqual from "./lessOrEqual";
 
 // A map of document ids to a vector clock.
@@ -75,6 +76,11 @@ export class Connection {
       throw new Error(`receiveMsg got a peerId that's not a string`);
     }
 
+    invariant(
+      this._theirClockMaps.keySeq().includes(peerId),
+      `receivedMsg called with unknown peer '${peerId}'. Peers must be registered first with "conn.addPeer('${peerId}')"`
+    );
+
     if (msg.clock) {
       this._theirClockMaps = this._theirClockMaps.set(
         peerId,
@@ -94,7 +100,7 @@ export class Connection {
     } else if (!this._ourClockMap.has(msg.docId)) {
       // If the remote node has data that we don't, immediately ask for it.
       // TODO should we sometimes exercise restraint in what we ask for?
-      this.sendMsg(this.createMsg(msg.docId, Map()), peerId);
+      this.sendMsg(peerId, this.createMsg(msg.docId, Map()));
     }
 
     return this._docStore.getDoc(msg.docId);
@@ -119,7 +125,7 @@ export class Connection {
     return doc;
   }
 
-  private sendMsg(msg: Message, peerId?: string) {
+  private sendMsg(peerId: string, msg: Message) {
     this.updateOurClock(msg.docId, msg.clock);
     this._sendMsg(peerId, msg);
   }
@@ -165,7 +171,8 @@ export class Connection {
         clockUnion(this._theirClockMaps.get(theirPeerId), docId, clock)
       );
 
-      this.sendMsg(this.createMsg(docId, clock, changes), theirPeerId);
+      this.sendMsg(theirPeerId, this.createMsg(docId, clock, changes));
+      return;
     }
 
     const ourClockIsOutOfSync = !clock.equals(
@@ -173,7 +180,7 @@ export class Connection {
     );
     if (ourClockIsOutOfSync) {
       // Note: updates ourClock AND sends a message.
-      this.sendMsg(this.createMsg(docId, clock), theirPeerId);
+      this.sendMsg(theirPeerId, this.createMsg(docId, clock));
     }
   }
 }
