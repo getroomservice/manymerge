@@ -4,7 +4,7 @@
  * of simplicity.
  */
 
-import { change, from, getChanges } from "automerge";
+import { from } from "automerge";
 import { fromJS } from "immutable";
 import { Connection } from ".";
 import { mockDocStore } from "./testUtil";
@@ -83,37 +83,6 @@ test("sendMsg assembles a message and calles the user provided fn", () => {
     docId: expectedDocId,
     changes: expectedChanges
   });
-});
-
-test("applyChanges properly updates a doc and calls the docSet", async () => {
-  const alpha = from({ name: "yay" });
-  const store = mockDocStore({
-    alpha
-  });
-
-  const conn = new Connection({
-    store,
-    sendMsg: jest.fn()
-  });
-
-  // Make change
-  const newAlpha = change(alpha, doc => {
-    doc.name = "changed";
-  });
-  const changes = getChanges(alpha, newAlpha);
-
-  // @ts-ignore private
-  const actualDoc = await conn.applyChanges("alpha", changes);
-
-  expect(actualDoc.name).toBe("changed");
-  expect(store.setDoc.mock.calls).toEqual([
-    [
-      "alpha",
-      {
-        name: "changed"
-      }
-    ]
-  ]);
 });
 
 test("addPeer adds something to _theirClockMaps", () => {

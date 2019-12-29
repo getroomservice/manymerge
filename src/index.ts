@@ -1,4 +1,13 @@
-import { Backend, Change, Clock, Doc, Frontend, Message } from "automerge";
+import {
+  applyChanges,
+  Backend,
+  Change,
+  Clock,
+  Doc,
+  Frontend,
+  init,
+  Message
+} from "automerge";
 import { fromJS, Map } from "immutable";
 import * as invariant from "invariant";
 import lessOrEqual from "./lessOrEqual";
@@ -92,7 +101,12 @@ export class Connection {
       );
     }
     if (msg.changes) {
-      await this.applyChanges(msg.docId, fromJS(msg.changes));
+      let doc = await this._docStore.getDoc(msg.docId);
+      if (!doc) {
+        doc = init({});
+      }
+      const newDoc = applyChanges(doc, msg.changes);
+      await this._docStore.setDoc(msg.docId, newDoc);
       return this.syncDoc(msg.docId);
     }
 
@@ -105,25 +119,6 @@ export class Connection {
     }
 
     return this._docStore.getDoc(msg.docId);
-  }
-
-  private async applyChanges(
-    docId: string,
-    changes: Change[]
-  ): Promise<Doc<any>> {
-    let doc =
-      (await this._docStore.getDoc(docId)) ||
-      // @ts-ignore because automerge has bad typings
-      Frontend.init({ backend: Backend });
-
-    const oldState = Frontend.getBackendState(doc);
-    const [newState, patch] = Backend.applyChanges(oldState, changes);
-
-    // @ts-ignore because automerge has bad typings
-    patch.state = newState;
-    doc = Frontend.applyPatch(doc, patch);
-    await this._docStore.setDoc(docId, doc);
-    return doc;
   }
 
   private sendMsg(peerId: string, msg: Message) {
@@ -157,6 +152,10 @@ export class Connection {
 
   private async maybeSyncDocWithPeer(theirPeerId: string, docId: string) {
     const doc = await this._docStore.getDoc(docId);
+    if (!doc) {
+      throw new Error(`Couldn't find doc with id '${docId}'`);
+    }
+
     const state = Frontend.getBackendState(doc);
     const clock = state.getIn(["opSet", "clock"]);
 

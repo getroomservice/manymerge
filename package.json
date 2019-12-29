@@ -23,6 +23,9 @@
     "events": "^3.0.0",
     "immutable": "^4.0.0-rc.12",
     "jest": "^24.9.0",
+    "lodash": "^4.17.15",
+    "transit-immutable-js": "^0.7.0",
+    "transit-js": "^0.8.861",
     "ts-jest": "^24.2.0",
     "typescript": "^3.7.4"
   },
