@@ -85,6 +85,6 @@ MyNetwork.on("msg", (from, msg) => {
 
 ## Differences from Automerge.Connection
 
-**ManyMerge does not use DocSet.** Unlike Automerge.Connection, ManyMerge does not know how you store your documents. If it did, all the hubs would have to store many, many documents of many different peers. 
+**ManyMerge does not use DocSet.** Unlike Automerge.Connection, ManyMerge does not know how you store your documents. If it did, all the hubs would have to store many, many documents of many different peers in memory, which doesn't scale well. 
 
 **ManyMerge does not multiplex many document updates over the same network.** If you want, you can implement this yourself by just batching messages in your `sendMsg` function. 
