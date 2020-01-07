@@ -1,25 +1,8 @@
 # ManyMerge
 
-ManyMerge is a client for [Automerge](https://github.com/automerge/automerge) that, unlike the existing [Automerge.Connection](https://github.com/automerge/automerge/blob/master/src/connection.js), sends and receives changes from _multiple peers_ at once.
+ManyMerge is a protocol for synchronizing Automerge documents. It's a replacement for `Automerge.Connection` that supports many-to-many and one-to-many relationships.
 
-ManyMerge works well as a hub for multiple peers using `Automerge.Connection`. 
-
-```
-┌───────────────┐  ┌───────────────┐  ┌───────────────┐
-│               │  │               │  │               │
-│  Connection   ◀──▶   ManyMerge   ◀──▶  Connection   │
-│               │  │               │  │               │
-└───────────────┘  └───────▲───────┘  └───────────────┘
-                           │                           
-                           │                           
-                   ┌───────▼───────┐                   
-                   │               │                   
-                   │  Connection   │                   
-                   │               │                   
-                   └───────────────┘                   
-```
-
-ManyMerge maintains a single clock with it's knowledge of documents and then one clock for each peer it knows about. When one peer updates the clock, ManyMerge will attempt to update all the peers it knows about.  
+ManyMerge is network-opinionated, but lets you implement it yourself. It assumes you have the concept of "broadcasting", where everyone who has access to the document can be alerted of a message. It also assumes that you're keeping a unique id for each connection on your network (called the `peerId`).
 
 ## Install
 
@@ -29,78 +12,74 @@ npm install --save manymerge
 
 ## Usage
 
-### Setting up storage
+Manymerge comes with two different types of connections that work together: **Peers** and **Hubs**.
 
-Unlike Automerge.Connection, ManyMerge isn't tied to a `DocSet`. Instead, it asks you implement an `AsyncDocStore` that satisfies the interface:
+### Peers
 
-```ts 
-interface AsyncDocStore {
-  getDoc<T>(docId: string): Promise<Doc<T>>;
-  setDoc<T>(docId: string, doc: Doc<T>): Promise<Doc<T>>;
+A Peer is **a 1-1 relationship** that can talk to a Hub or another Peer. Your peer will need to create a `sendMsg` function that takes a ManyMerge `Message` and sends it to the network. Typically that looks like this:
+
+```ts
+import { Peer } from "manymerge";
+
+function sendMsg(msg) {
+  MyNetwork.emit("to-server", msg);
 }
+
+const peer = new Peer(sendMsg);
 ```
 
-An in-memory example of such a store might be:
+When a peer wants to alert it's counterpart that it changed a document, it should call the `notify` function:
+
 ```ts
-import { AsyncDocStore } from "automerge-simple-connection";
+import Automerge from "automerge";
 
-class MyDocStore extends AsyncDocStore {
-  _docs = {};
+let myDoc = Automerge.from({ title: "cool doc" });
+peer.notify(myDoc);
+```
 
-  async getDoc(docId) {
-    return _docs[docId];
-  }
+When a peer gets a message from the network, it should run `applyMessage`, which will return a new document
+with any changes applied.
 
-  async setDoc(docId, doc) {
-    _docs[docId] = doc;
-    return doc;
-  }
+```ts
+let myDoc = Automerge.from({ title: "cool doc" });
+
+MyNetwork.on("from-server", msg => {
+  myDoc = peer.applyMessage(msg, myDoc);
+});
+```
+
+### Hubs
+
+Hubs are a **many-to-many (or 1-to-many) relationship** that can talk to many Peers or other Hubs. Unlike Peers, Hubs need the ability
+to "broadcast" a message to everyone on the network (or at least as many people as possible).To save time, Hubs will also cache Peer's they've seen recently and directly communicate directly with them.
+
+To set this up, create `broadcastMsg` and `sendMsgTo` functions:
+
+```ts
+import { Hub } from "manymerge";
+
+function sendMsgTo(peerId, msg) {
+  MyNetwork.to(peerId).emit("msg", msg);
 }
-```
 
-**Note that ManyMerge does not use handlers.** Unlike `Connection`, calling `setDoc` does not automatically send messages to peers. 
-
-### Setting up transit
-
-Like Automerge.Connection, ManyMerge asks you to provide a function that sends messages over the network to a particular peer.
-
-```ts
-function sendMsg(peerId, msg) {
-  yourNetwork.emit(peerId, JSON.stringify(msg));
+function broadcastMsg(msg) {
+  MyNetwork.on("some-channel").emit("msg", msg);
 }
+
+const hub = new Hub(sendMsgTo, broadcastMsg);
 ```
 
-### Creating a connection 
+Then, hub works like a peer, it can notify others of documents:
 
 ```ts
-import { Connection } from 'manymerge'
-
-const conn = new Connection(new MyDocStore(), sendMsg)
+// Tell folks about our doc
+hub.notify(myDoc);
 ```
 
-### Adding peers 
-
-Before you can send or receive messages from peers, you _must_ manually `addPeer`. ManyMerge will throw an error if it's given a message from a non-peer. 
+Unlike the peer, when it gets a message, it'll need to know the unique id of the connection sending it. It will use this later in the `sendMsgTo` function.
 
 ```ts
-conn.addPeer("my-unique-peer-id")
-```
-
-### Receiving messages 
-When your network gets a message from a peer, it should call the `receiveMsg` function like so:
-
-```ts
-yourNetwork.onSomeMessge((peerId, msg) => {
-  conn.receiveMsg(peerId, msg)
-})
-```
-
-
-### Broadcasting changes (optional)
-Typically ManyMerge is used as a hub where that listens to messages and automatically syncs it's documents with it's peers. So if you're calling `receiveMsg`, you're already broadcasting changes whenever the internals of ManyMerge determine appropriate. 
-
-But, if your ManyMerge instance itself changes the document, you can manually broadcast changes with `docChanged` like so:
-
-```ts
-conn.docChanged("some-doc-id", myDoc)
+MyNetwork.on("msg", (from, msg) => {
+  myDoc = hub.applyMessage(from, msg, myDoc);
+});
 ```

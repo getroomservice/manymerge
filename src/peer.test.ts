@@ -6,7 +6,7 @@ test("our protocol will send and receive changes", () => {
   const client = new Peer(clientSendMsg);
 
   // send an update
-  client.broadcastDoc(
+  client.notify(
     change(init<any>(), doc => {
       doc.name = "my-doc";
     })

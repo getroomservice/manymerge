@@ -47,7 +47,7 @@ export default class Peer {
     return ourDoc;
   }
 
-  public broadcastDoc<T>(doc: Doc<T>) {
+  public notify<T>(doc: Doc<T>) {
     // 1. If we think that we have changes to share, we'll send them.
     const ourChanges = recentChanges(doc, this._theirClock);
     if (ourChanges.length > 0) {

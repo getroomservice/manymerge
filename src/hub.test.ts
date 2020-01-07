@@ -10,7 +10,7 @@ test("A peer can send a change to the hub", () => {
   const peer = new Peer(peerSendMsg);
 
   // send an update
-  peer.broadcastDoc(
+  peer.notify(
     change(init<any>(), doc => {
       doc.name = "my-doc";
     })
@@ -50,7 +50,7 @@ test("The hub can broadcast it's clock to an unknown peer.", () => {
   // At this point, the hub does not have any peers cached,
   // it's just broadcasting them to unknown peers.
   const hubDoc = from({ name: "from-hub" });
-  hub.broadcastDoc(hubDoc);
+  hub.notify(hubDoc);
 
   expect(hubBroadcastMsg.mock.calls.length).toBe(1);
   const [broadcastMsg] = hubBroadcastMsg.mock.calls[0] as [Message];
@@ -119,7 +119,7 @@ test("we broadcast documents to peers we know about", () => {
   expect(hub._theirClocks.get("our-peer")).toBeTruthy(); // sanity check
 
   // Then broadcast a doc
-  hub.broadcastDoc(from({ name: "hi" }));
+  hub.notify(from({ name: "hi" }));
 
   // We should call this peer
   expect(hubSendMsg.mock.calls.length).toBe(1);
@@ -135,7 +135,7 @@ test("the peer and the hub both make changes and come to agreement", () => {
   // First, we send a doc to the hub from the peer
   // and they agree
   let peerDoc = from({ title: "my title" });
-  peer.broadcastDoc(peerDoc);
+  peer.notify(peerDoc);
   const [msg] = peerSendMsgFn.mock.calls[0];
 
   const hubSendMsg = jest.fn();

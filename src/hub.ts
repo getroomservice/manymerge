@@ -59,7 +59,7 @@ export default class Hub {
     return ourDoc;
   }
 
-  public broadcastDoc<T>(doc: Doc<T>) {
+  public notify<T>(doc: Doc<T>) {
     // 1. If we have folks we're tracking, send them changes if needed.
     this._theirClocks.forEach((clock, peerId) => {
       const ourChanges = recentChanges(doc, clock);
