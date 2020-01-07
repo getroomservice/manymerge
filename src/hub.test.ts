@@ -1,8 +1,8 @@
 import { change, from, init } from "automerge";
 import { getClock } from "automerge-clocks";
 import { Map } from "immutable";
-import Hub from "./hub";
-import Peer from "./peer";
+import { Hub } from "./hub";
+import { Peer } from "./peer";
 import { Message } from "./types";
 
 test("A peer can send a change to the hub", () => {

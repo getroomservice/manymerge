@@ -1,5 +1,5 @@
 import { change, init } from "automerge";
-import Peer from "./peer";
+import { Peer } from "./peer";
 
 test("our protocol will send and receive changes", () => {
   const clientSendMsg = jest.fn();

@@ -7,7 +7,7 @@ import { Clock, Message } from "./types";
  * An Automerge Network protocol getting consensus
  * between two documents in different places.
  */
-export default class Hub {
+export class Hub {
   // This is just an in-memory cache of where a peer is.
   // TODO: we may want to automatically get rid of items from this cache.
   _theirClocks: Map<string, Clock>;

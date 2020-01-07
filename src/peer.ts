@@ -7,7 +7,7 @@ import { Message } from "./types";
  * An Automerge Network protocol getting consensus
  * between two documents in different places.
  */
-export default class Peer {
+export class Peer {
   _theirClock: Map<string, number>;
   _sendMsg: (msg: Message) => void;
 
