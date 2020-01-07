@@ -32,6 +32,7 @@
   "types": "dist/index.d.ts",
   "dependencies": {
     "@types/events": "^3.0.0",
+    "automerge-clocks": "^1.0.0",
     "invariant": "^2.2.4"
   }
 }
