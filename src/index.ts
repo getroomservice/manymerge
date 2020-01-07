@@ -1,7 +1,5 @@
-import Hub from "./hub";
-import Peer from "./peer";
+import hub from "./hub";
+import peer from "./peer";
 
-export default {
-  Hub,
-  Peer
-};
+export const Hub = hub;
+export const Peer = peer;
