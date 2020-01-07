@@ -2,8 +2,6 @@
 
 ManyMerge is a protocol for synchronizing Automerge documents. It's a replacement for `Automerge.Connection` that supports many-to-many and one-to-many relationships.
 
-ManyMerge is network-opinionated, but lets you implement it yourself. It assumes you have the concept of "broadcasting", where everyone who has access to the document can be alerted of a message. It also assumes that you're keeping a unique id for each connection on your network (called the `peerId`).
-
 ## Install
 
 ```
@@ -83,3 +81,10 @@ MyNetwork.on("msg", (from, msg) => {
   myDoc = hub.applyMessage(from, msg, myDoc);
 });
 ```
+
+
+## Differences from Automerge.Connection
+
+**ManyMerge does not use DocSet.** Unlike Automerge.Connection, ManyMerge does not know how you store your documents. If it did, all the hubs would have to store many, many documents of many different peers. 
+
+**ManyMerge does not multiplex many document updates over the same network.** If you want, you can implement this yourself by just batching messages in your `sendMsg` function. 
