@@ -48,8 +48,7 @@ MyNetwork.on("from-server", msg => {
 
 ### Hubs
 
-Hubs are a **many-to-many (or 1-to-many) relationship** that can talk to many Peers or other Hubs. Unlike Peers, Hubs need the ability
-to "broadcast" a message to everyone on the network (or at least as many people as possible).To save time, Hubs will also cache Peer's they've seen recently and directly communicate directly with them.
+Hubs are a **many-to-many (or 1-to-many) relationship** that can talk to many Peers or other Hubs. Unlike Peers, Hubs need the ability to "broadcast" a message to everyone on the network (or at least as many people as possible). To save time, Hubs will also cache Peer's they've seen recently and directly communicate directly with them.
 
 To set this up, create `broadcastMsg` and `sendMsgTo` functions:
 
