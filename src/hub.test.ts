@@ -32,7 +32,9 @@ test("A peer can send a change to the hub", () => {
 
   // We didn't send anything back since we don't need to
   expect(hubSendMsg.mock.calls.length).toBe(0);
-  expect(hubBroadcastMsg.mock.calls.length).toBe(0);
+
+  // We should expect to broadcast our changes to other peers
+  expect(hubBroadcastMsg.mock.calls.length).toBe(1);
 
   // We've stored this peer's current state
   expect(hub._theirClocks.get("my-peer")).toEqual(getClock(newDoc));

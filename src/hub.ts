@@ -34,6 +34,11 @@ export class Hub {
     // 1. If they've sent us changes, we'll try to apply them.
     if (msg.changes) {
       ourDoc = applyChanges(doc, msg.changes);
+
+      // We broadcast here for the other members of the hub
+      this.broadcastMsg({
+        clock: getClock(ourDoc)
+      });
     }
 
     // 2. If we have any changes to let them know about,
