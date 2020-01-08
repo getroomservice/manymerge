@@ -503,10 +503,10 @@ atob@^2.1.2:
   resolved "https://registry.yarnpkg.com/atob/-/atob-2.1.2.tgz#6d9517eb9e030d2436666651e86bd9f6f13533c9"
   integrity sha512-Wm6ukoaOGJi/73p/cl2GvLjTI5JM1k/O14isD73YML8StrH/7/lRFgmg8nICZgD3bZZvjwCGxtMOD3wWNAu8cg==
 
-automerge-clocks@1.1.0:
-  version "1.1.0"
-  resolved "https://registry.yarnpkg.com/automerge-clocks/-/automerge-clocks-1.1.0.tgz#55178678408c68c3bc71fa03b59ab04a0f515f8d"
-  integrity sha512-/SVH2aFeSvSanbbUcOw9cLcNGnXdRV/7z3MBtjvX5p1HFogwQtHk/VlwqE3ULyLXN/KlLhGObxPBYIzGHSGlww==
+automerge-clocks@1.2.0:
+  version "1.2.0"
+  resolved "https://registry.yarnpkg.com/automerge-clocks/-/automerge-clocks-1.2.0.tgz#b14a127c8206ae0cac80662855978dbba3a73b38"
+  integrity sha512-OuJSINp5Dv2qqWfuM/qhN9VajSWd+Sk19oLVR7tPih4xI+4dnu+6q6pNsCJkprx6zII/wMZPKT1olVSIcNY/RA==
 
 automerge@^0.12.1:
   version "0.12.1"
