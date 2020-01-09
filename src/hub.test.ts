@@ -1,4 +1,4 @@
-import { change, from, init } from "automerge";
+import { change, from, getChanges, init } from "automerge";
 import { getClock } from "automerge-clocks";
 import { Map } from "immutable";
 import { Hub } from "./hub";
@@ -178,4 +178,50 @@ test("the peer and the hub both make changes and come to agreement", () => {
 
   // And shouldn't send anything back.
   expect(hubSendMsg.mock.calls.length).toBe(1); // we've already sent one
+});
+
+test("we don't have race conditions if we have a slow db write", () => {
+  const sendMsg = jest.fn();
+  const broadcastMsg = jest.fn();
+  const oldDoc = from({ count: 0 });
+  const hub = new Hub(sendMsg, broadcastMsg);
+  const georgesNewDoc = change(oldDoc, doc => {
+    doc.count += 1;
+  });
+
+  // 1. We get a new change from peer "george"
+  hub.applyMessage(
+    "george",
+    {
+      clock: getClock(georgesNewDoc),
+      changes: getChanges(oldDoc, georgesNewDoc)
+    },
+    oldDoc
+  );
+  expect(broadcastMsg.mock.calls.length).toBe(1);
+
+  // 2. We start a long-running write, like a DB write.
+
+  // just pretend there's code here that does it,
+  // I believe in your powers of imagination
+
+  // 3. We get a message from another peer, like "bob"
+  // that should be outdated, since we just applied george's
+  // changes.
+  const newDoc = hub.applyMessage(
+    "bob",
+    {
+      clock: getClock(oldDoc)
+    },
+    // We haven't finished our database write yet, so
+    // from this perspective, we're still assuming this might
+    // be exciting new changes we should get.
+    oldDoc
+  );
+  // expect(newDoc).toBeFalsy(); // TODO: maybe make these return nothing?
+
+  // 4. Now, we'd expect that we should send Bob a message
+  // containing our new updated clock that George gave us,
+  // even though the database write might not be finished.
+  expect(broadcastMsg.mock.calls.length).toBe(2);
 });

@@ -8,6 +8,15 @@ import { Clock, Message } from "./types";
  * between two documents in different places.
  */
 export class Hub {
+  // We keep track of where we think our clock is because
+  // getting and saving the doc is not under the Hub's control
+  // and is offten implemented asynchronously (such as a db write).
+  //
+  // So by keeping a local copy of ourClock, we'll help prevent
+  // race conditions that pop up when we get a message in between
+  // a write's start and end.
+  _ourClock: Clock;
+
   // This is just an in-memory cache of where a peer is.
   // TODO: we may want to automatically get rid of items from this cache.
   _theirClocks: Map<string, Clock>;
@@ -20,6 +29,7 @@ export class Hub {
     // Send to everyone
     broadcastMsg: (msg: Message) => void
   ) {
+    this._ourClock = Map();
     this._theirClocks = Map();
     this._broadcast = broadcastMsg;
     this._sendTo = sendMsgTo;
@@ -65,6 +75,9 @@ export class Hub {
   }
 
   public notify<T>(doc: Doc<T>) {
+    // 0. Update ourClock
+    this._ourClock = union(this._ourClock, getClock(doc));
+
     // 1. If we have folks we're tracking, send them changes if needed.
     this._theirClocks.forEach((clock, peerId) => {
       const ourChanges = recentChanges(doc, clock);
