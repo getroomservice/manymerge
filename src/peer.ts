@@ -44,7 +44,9 @@ export class Peer {
       });
     }
 
-    return ourDoc;
+    if (msg.changes) {
+      return ourDoc;
+    }
   }
 
   public notify<T>(doc: Doc<T>) {

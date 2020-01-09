@@ -35,14 +35,16 @@ let myDoc = Automerge.from({ title: "cool doc" });
 peer.notify(myDoc);
 ```
 
-When a peer gets a message from the network, it should run `applyMessage`, which will return a new document
-with any changes applied.
+When a peer gets a message from the network, it should run `applyMessage`, which will return a new document with any changes applied. If the document is not updated, it will return nothing. In this case, you should not update the doc.
 
 ```ts
 let myDoc = Automerge.from({ title: "cool doc" });
 
 MyNetwork.on("from-server", msg => {
-  myDoc = peer.applyMessage(msg, myDoc);
+  const newDoc = peer.applyMessage(msg, myDoc);
+  if (doc) {
+    myDoc = newDoc;
+  }
 });
 ```
 
@@ -77,13 +79,15 @@ Unlike the peer, when it gets a message, it'll need to know the unique id of the
 
 ```ts
 MyNetwork.on("msg", (from, msg) => {
-  myDoc = hub.applyMessage(from, msg, myDoc);
+  newDoc = hub.applyMessage(from, msg, myDoc);
+  if (newDoc) {
+    myDoc = newDoc;
+  }
 });
 ```
 
-
 ## Differences from Automerge.Connection
 
-**ManyMerge does not use DocSet.** Unlike Automerge.Connection, ManyMerge does not know how you store your documents. If it did, all the hubs would have to store many, many documents of many different peers in memory, which doesn't scale well. 
+**ManyMerge does not use DocSet.** Unlike Automerge.Connection, ManyMerge does not know how you store your documents. If it did, all the hubs would have to store many, many documents of many different peers in memory, which doesn't scale well.
 
-**ManyMerge does not multiplex many document updates over the same network.** If you want, you can implement this yourself by just batching messages in your `sendMsg` function. 
+**ManyMerge does not multiplex many document updates over the same network.** If you want, you can implement this yourself by just batching messages in your `sendMsg` function.
