@@ -180,7 +180,7 @@ test("the peer and the hub both make changes and come to agreement", () => {
   expect(hubSendMsg.mock.calls.length).toBe(1); // we've already sent one
 });
 
-test("we don't have race conditions if we have a slow db write", () => {
+test("We should only return something from applyMessage if we have a new doc", () => {
   const sendMsg = jest.fn();
   const broadcastMsg = jest.fn();
   const oldDoc = from({ count: 0 });
@@ -211,17 +211,12 @@ test("we don't have race conditions if we have a slow db write", () => {
   const newDoc = hub.applyMessage(
     "bob",
     {
-      clock: getClock(oldDoc)
+      clock: getClock(from({ count: 0 }))
     },
     // We haven't finished our database write yet, so
     // from this perspective, we're still assuming this might
     // be exciting new changes we should get.
     oldDoc
   );
-  // expect(newDoc).toBeFalsy(); // TODO: maybe make these return nothing?
-
-  // 4. Now, we'd expect that we should send Bob a message
-  // containing our new updated clock that George gave us,
-  // even though the database write might not be finished.
-  expect(broadcastMsg.mock.calls.length).toBe(2);
+  expect(newDoc).toBeFalsy(); // TODO: maybe make these return nothing?
 });

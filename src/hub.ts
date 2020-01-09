@@ -44,6 +44,7 @@ export class Hub {
     // 1. If they've sent us changes, we'll try to apply them.
     if (msg.changes) {
       ourDoc = applyChanges(doc, msg.changes);
+      this._ourClock = getClock(ourDoc);
 
       // We broadcast here for the other members of the hub
       this.broadcastMsg({
@@ -61,17 +62,20 @@ export class Hub {
       });
     }
 
-    // 3. If our clock is still earlier than their clock,
+    // 3. If their clock is later than our clock,
     // then we should let them know, which will prompt
     // them to send us changes via 2. listed above.
-    const ourClock = getClock(ourDoc);
-    if (later(msg.clock, ourClock)) {
+    if (later(msg.clock, this._ourClock)) {
       this.broadcastMsg({
-        clock: ourClock
+        clock: this._ourClock
       });
     }
 
-    return ourDoc;
+    // Finally, we we made changes, we should return the
+    // doc to be cached. Otherwise return nothing.
+    if (msg.changes) {
+      return ourDoc;
+    }
   }
 
   public notify<T>(doc: Doc<T>) {
@@ -112,6 +116,8 @@ export class Hub {
   private broadcastMsg(msg: Message) {
     // send msg first
     this._broadcast(msg);
+
+    this._ourClock = msg.clock;
 
     // Todo: maybe do this asynchronously to not block in big rooms?
     this._theirClocks = this._theirClocks.map(clock => {
