@@ -48,7 +48,12 @@ export class Hub {
 
       // We broadcast here for the other members of the hub
       this.broadcastMsg({
-        clock: getClock(ourDoc)
+        clock: getClock(ourDoc),
+
+        // We make the assumption that if someone's sent the hub
+        // changes, they likely want those changes to be sent to
+        // everyone else.
+        changes: msg.changes
       });
     }
 
