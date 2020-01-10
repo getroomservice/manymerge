@@ -84,6 +84,9 @@ export class Hub {
   }
 
   public notify<T>(doc: Doc<T>) {
+    // TODO: check this clock against our clock and don't send messages
+    // if we don't need to.
+
     // 0. Update ourClock
     this._ourClock = union(this._ourClock, getClock(doc));
 
