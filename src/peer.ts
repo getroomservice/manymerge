@@ -1,6 +1,6 @@
 import { applyChanges, Doc } from "automerge";
 import { getClock, later, recentChanges, union } from "automerge-clocks";
-import { Map } from "immutable";
+import { Map, fromJS } from "immutable";
 import { Message } from "./types";
 
 /**
@@ -19,6 +19,9 @@ export class Peer {
   public applyMessage<T>(msg: Message, doc: Doc<T>): Doc<T> {
     let ourDoc = doc;
 
+    // Convert msg clock to Immutable Map incase its been serialized
+    const msgClock = fromJS(msg.clock);
+
     // 1. If they've sent us changes, we'll try to apply them.
     if (msg.changes) {
       ourDoc = applyChanges(doc, msg.changes);
@@ -26,7 +29,7 @@ export class Peer {
 
     // 2. If we have any changes to let them know about,
     // we should send it to them.
-    const ourChanges = recentChanges(doc, msg.clock);
+    const ourChanges = recentChanges(doc, msgClock);
     if (ourChanges.length > 0) {
       this.sendMsg({
         clock: getClock(ourDoc),
@@ -38,7 +41,7 @@ export class Peer {
     // then we should let them know, which will prompt
     // them to send us changes via 2. listed above.
     const ourClock = getClock(ourDoc);
-    if (later(msg.clock, ourClock)) {
+    if (later(msgClock, ourClock)) {
       this.sendMsg({
         clock: ourClock
       });
