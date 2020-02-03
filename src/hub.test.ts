@@ -40,6 +40,37 @@ test("A peer can send a change to the hub", () => {
   expect(hub._theirClocks.get("my-peer")).toEqual(getClock(newDoc));
 });
 
+test("The hub can handle serialized messages", () => {
+  const peerSendMsg = jest.fn();
+  const peer = new Peer(peerSendMsg);
+
+  // send an update
+  peer.notify(
+    change(init<any>(), doc => {
+      doc.name = "my-doc";
+    })
+  );
+
+  // We just sent this message
+  const [clientMsg] = peerSendMsg.mock.calls[0];
+  expect(clientMsg.changes.length).toBe(1);
+
+  // Check that a hub can get the message back
+  const hubSendMsg = jest.fn();
+  const hubBroadcastMsg = jest.fn();
+  const hub = new Hub(hubSendMsg, hubBroadcastMsg);
+
+  // Convert the client message to plain JSON
+  const jsClientMsg = JSON.parse(JSON.stringify(clientMsg));
+
+  const newDoc = hub.applyMessage("my-peer", jsClientMsg, init<any>());
+
+  // Check that the clocks were updated and match
+  expect(hub._theirClocks.get("my-peer").toJS()).toEqual(
+    getClock(newDoc).toJS()
+  );
+});
+
 test("The hub can broadcast it's clock to an unknown peer.", () => {
   const hubSendMsg = jest.fn();
   const hubBroadcastMsg = jest.fn();
