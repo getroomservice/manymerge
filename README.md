@@ -1,27 +1,93 @@
-# TSDX Bootstrap
+# ManyMerge
 
-This project was bootstrapped with [TSDX](https://github.com/jaredpalmer/tsdx).
+ManyMerge is a protocol for synchronizing Automerge documents. It's a replacement for `Automerge.Connection` that supports many-to-many and one-to-many relationships.
 
-## Local Development
+## Install
 
-Below is a list of commands you will probably find useful.
+```
+npm install --save manymerge
+```
 
-### `npm start` or `yarn start`
+## Usage
 
-Runs the project in development/watch mode. Your project will be rebuilt upon changes. TSDX has a special logger for you convenience. Error messages are pretty printed and formatted for compatibility VS Code's Problems tab.
+Manymerge comes with two different types of connections that work together: **Peers** and **Hubs**.
 
-<img src="https://user-images.githubusercontent.com/4060187/52168303-574d3a00-26f6-11e9-9f3b-71dbec9ebfcb.gif" width="600" />
+### Peers
 
-Your library will be rebuilt if you make edits.
+A Peer is **a 1-1 relationship** that can talk to a Hub or another Peer. Your peer will need to create a `sendMsg` function that takes a ManyMerge `Message` and sends it to the network. Typically that looks like this:
 
-### `npm run build` or `yarn build`
+```ts
+import { Peer } from "manymerge";
 
-Bundles the package to the `dist` folder.
-The package is optimized and bundled with Rollup into multiple formats (CommonJS, UMD, and ES Module).
+function sendMsg(msg) {
+  MyNetwork.emit("to-server", msg);
+}
 
-<img src="https://user-images.githubusercontent.com/4060187/52168322-a98e5b00-26f6-11e9-8cf6-222d716b75ef.gif" width="600" />
+const peer = new Peer(sendMsg);
+```
 
-### `npm test` or `yarn test`
+When a peer wants to alert it's counterpart that it changed a document, it should call the `notify` function:
 
-Runs the test watcher (Jest) in an interactive mode.
-By default, runs tests related to files changed since the last commit.
+```ts
+import Automerge from "automerge";
+
+let myDoc = Automerge.from({ title: "cool doc" });
+peer.notify(myDoc);
+```
+
+When a peer gets a message from the network, it should run `applyMessage`, which will return a new document with any changes applied. If the document is not updated, it will return nothing. In this case, you should not update the doc.
+
+```ts
+let myDoc = Automerge.from({ title: "cool doc" });
+
+MyNetwork.on("from-server", msg => {
+  const newDoc = peer.applyMessage(msg, myDoc);
+  if (doc) {
+    myDoc = newDoc;
+  }
+});
+```
+
+### Hubs
+
+Hubs are a **many-to-many (or 1-to-many) relationship** that can talk to many Peers or other Hubs. Unlike Peers, Hubs need the ability to "broadcast" a message to everyone on the network (or at least as many people as possible). To save time, Hubs will also cache Peer's they've seen recently and directly communicate directly with them.
+
+To set this up, create `broadcastMsg` and `sendMsgTo` functions:
+
+```ts
+import { Hub } from "manymerge";
+
+function sendMsgTo(peerId, msg) {
+  MyNetwork.to(peerId).emit("msg", msg);
+}
+
+function broadcastMsg(msg) {
+  MyNetwork.on("some-channel").emit("msg", msg);
+}
+
+const hub = new Hub(sendMsgTo, broadcastMsg);
+```
+
+Then, hub works like a peer, it can notify others of documents:
+
+```ts
+// Tell folks about our doc
+hub.notify(myDoc);
+```
+
+Unlike the peer, when it gets a message, it'll need to know the unique id of the connection sending it. It will use this later in the `sendMsgTo` function.
+
+```ts
+MyNetwork.on("msg", (from, msg) => {
+  newDoc = hub.applyMessage(from, msg, myDoc);
+  if (newDoc) {
+    myDoc = newDoc;
+  }
+});
+```
+
+## Differences from Automerge.Connection
+
+**ManyMerge does not use DocSet.** Unlike Automerge.Connection, ManyMerge does not know how you store your documents. If it did, all the hubs would have to store many, many documents of many different peers in memory, which doesn't scale well.
+
+**ManyMerge does not multiplex many document updates over the same network.** If you want, you can implement this yourself by just batching messages in your `sendMsg` function.
