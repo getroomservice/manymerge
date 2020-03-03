@@ -1,6 +1,6 @@
 {
   "name": "manymerge",
-  "version": "2.5.2",
+  "version": "2.5.3",
   "license": "MIT",
   "main": "dist/index.js",
   "typings": "dist/index.d.ts",
@@ -40,9 +40,9 @@
   },
   "dependencies": {
     "@types/events": "^3.0.0",
-    "automerge-clocks": "1.2.1",
-    "invariant": "^2.2.4",
     "automerge": "^0.13.0",
-    "immutable": "^3.8.2"
+    "automerge-clocks": "1.2.1",
+    "immutable": "^3.8.2",
+    "invariant": "^2.2.4"
   }
 }
