@@ -17,10 +17,10 @@ Manymerge comes with two different types of connections that work together: **Pe
 A Peer is **a 1-1 relationship** that can talk to a Hub or another Peer. Your peer will need to create a `sendMsg` function that takes a ManyMerge `Message` and sends it to the network. Typically that looks like this:
 
 ```ts
-import { Peer } from "manymerge";
+import { Peer } from 'manymerge';
 
 function sendMsg(msg) {
-  MyNetwork.emit("to-server", msg);
+  MyNetwork.emit('to-server', msg);
 }
 
 const peer = new Peer(sendMsg);
@@ -29,19 +29,19 @@ const peer = new Peer(sendMsg);
 When a peer wants to alert it's counterpart that it changed a document, it should call the `notify` function:
 
 ```ts
-import Automerge from "automerge";
+import Automerge from 'automerge';
 
-let myDoc = Automerge.from({ title: "cool doc" });
+let myDoc = Automerge.from({ title: 'cool doc' });
 peer.notify(myDoc);
 ```
 
 When a peer gets a message from the network, it should run `applyMessage`, which will return a new document with any changes applied. If the document is not updated, it will return nothing. In this case, you should not update the doc.
 
 ```ts
-let myDoc = Automerge.from({ title: "cool doc" });
+let myDoc = Automerge.from({ title: 'cool doc' });
 
-MyNetwork.on("from-server", msg => {
-  const newDoc = peer.applyMessage(msg, myDoc);
+MyNetwork.on('from-server', msg => {
+  const doc = peer.applyMessage(msg, myDoc);
   if (doc) {
     myDoc = newDoc;
   }
@@ -55,14 +55,14 @@ Hubs are a **many-to-many (or 1-to-many) relationship** that can talk to many Pe
 To set this up, create `broadcastMsg` and `sendMsgTo` functions:
 
 ```ts
-import { Hub } from "manymerge";
+import { Hub } from 'manymerge';
 
 function sendMsgTo(peerId, msg) {
-  MyNetwork.to(peerId).emit("msg", msg);
+  MyNetwork.to(peerId).emit('msg', msg);
 }
 
 function broadcastMsg(msg) {
-  MyNetwork.on("some-channel").emit("msg", msg);
+  MyNetwork.on('some-channel').emit('msg', msg);
 }
 
 const hub = new Hub(sendMsgTo, broadcastMsg);
@@ -78,7 +78,7 @@ hub.notify(myDoc);
 Unlike the peer, when it gets a message, it'll need to know the unique id of the connection sending it. It will use this later in the `sendMsgTo` function.
 
 ```ts
-MyNetwork.on("msg", (from, msg) => {
+MyNetwork.on('msg', (from, msg) => {
   newDoc = hub.applyMessage(from, msg, myDoc);
   if (newDoc) {
     myDoc = newDoc;
