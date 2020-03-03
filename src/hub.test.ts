@@ -1,18 +1,18 @@
-import { change, from, getChanges, init } from "automerge";
-import { getClock } from "automerge-clocks";
-import { Map } from "immutable";
-import { Hub } from "./hub";
-import { Peer } from "./peer";
-import { Message } from "./types";
+import { change, from, getChanges, init } from 'automerge';
+import { getClock } from 'automerge-clocks';
+import { Map } from 'immutable';
+import { Hub } from './hub';
+import { Peer } from './peer';
+import { Message } from './types';
 
-test("A peer can send a change to the hub", () => {
+test('A peer can send a change to the hub', () => {
   const peerSendMsg = jest.fn();
   const peer = new Peer(peerSendMsg);
 
   // send an update
   peer.notify(
     change(init<any>(), doc => {
-      doc.name = "my-doc";
+      doc.name = 'my-doc';
     })
   );
 
@@ -25,10 +25,10 @@ test("A peer can send a change to the hub", () => {
   const hubBroadcastMsg = jest.fn();
   const hub = new Hub(hubSendMsg, hubBroadcastMsg);
 
-  const newDoc = hub.applyMessage("my-peer", clientMsg, init<any>());
+  const newDoc = hub.applyMessage('my-peer', clientMsg, init<any>());
 
   // We received and applied changes to the doc
-  expect(newDoc.name).toBe("my-doc");
+  expect(newDoc!.name).toBe('my-doc');
 
   // We didn't send anything back since we don't need to
   expect(hubSendMsg.mock.calls.length).toBe(0);
@@ -37,17 +37,17 @@ test("A peer can send a change to the hub", () => {
   expect(hubBroadcastMsg.mock.calls.length).toBe(1);
 
   // We've stored this peer's current state
-  expect(hub._theirClocks.get("my-peer")).toEqual(getClock(newDoc));
+  expect(hub._theirClocks.get('my-peer')).toEqual(getClock(newDoc!));
 });
 
-test("The hub can handle serialized messages", () => {
+test('The hub can handle serialized messages', () => {
   const peerSendMsg = jest.fn();
   const peer = new Peer(peerSendMsg);
 
   // send an update
   peer.notify(
     change(init<any>(), doc => {
-      doc.name = "my-doc";
+      doc.name = 'my-doc';
     })
   );
 
@@ -63,11 +63,11 @@ test("The hub can handle serialized messages", () => {
   // Convert the client message to plain JSON
   const jsClientMsg = JSON.parse(JSON.stringify(clientMsg));
 
-  const newDoc = hub.applyMessage("my-peer", jsClientMsg, init<any>());
+  const newDoc = hub.applyMessage('my-peer', jsClientMsg, init<any>());
 
   // Check that the clocks were updated and match
-  expect(hub._theirClocks.get("my-peer").toJS()).toEqual(
-    getClock(newDoc).toJS()
+  expect(hub._theirClocks.get('my-peer').toJS()).toEqual(
+    getClock(newDoc!).toJS()
   );
 });
 
@@ -82,7 +82,7 @@ test("The hub can broadcast it's clock to an unknown peer.", () => {
 
   // At this point, the hub does not have any peers cached,
   // it's just broadcasting them to unknown peers.
-  const hubDoc = from({ name: "from-hub" });
+  const hubDoc = from({ name: 'from-hub' });
   hub.notify(hubDoc);
 
   expect(hubBroadcastMsg.mock.calls.length).toBe(1);
@@ -91,7 +91,7 @@ test("The hub can broadcast it's clock to an unknown peer.", () => {
   // Because we haven't registered any peers, we're just broadcasting
   // at this point. No changes.
   expect(broadcastMsg.changes).toBeFalsy();
-  expect(broadcastMsg.clock).toEqual(getClock(hubDoc));
+  expect(broadcastMsg.clock).toEqual(getClock(hubDoc!));
 
   /**
    * Unknown peer picks up Hub's broadcast,
@@ -111,7 +111,7 @@ test("The hub can broadcast it's clock to an unknown peer.", () => {
   // Because we're a brand new peer, we shouldn't expect any
   // changes; though that could be the case in a diff example.
   expect(sendMsg.changes).toBeFalsy();
-  expect(sendMsg.clock).toEqual(getClock(peerDoc));
+  expect(sendMsg.clock).toEqual(getClock(peerDoc!));
 
   /**
    * Hub registers new peer, sends back changes.
@@ -119,16 +119,16 @@ test("The hub can broadcast it's clock to an unknown peer.", () => {
 
   // When the hub gets the message, it sends changes
   // back to the peer.
-  hub.applyMessage("my-peer", sendMsg, hubDoc);
+  hub.applyMessage('my-peer', sendMsg, hubDoc);
 
   // We've sent a change
   expect(hubSendMsg.mock.calls.length).toBe(1);
   const [peerId, changeMsg] = hubSendMsg.mock.calls[0];
-  expect(peerId).toBe("my-peer");
+  expect(peerId).toBe('my-peer');
   expect(changeMsg.changes).toBeTruthy();
 
   // We've updated our peers with this new peer
-  expect(hub._theirClocks.get("my-peer")).toBeTruthy();
+  expect(hub._theirClocks.get('my-peer')).toBeTruthy();
 
   /**
    * Peer receives changes
@@ -136,66 +136,66 @@ test("The hub can broadcast it's clock to an unknown peer.", () => {
   const newDoc = peer.applyMessage(changeMsg, peerDoc);
 
   // We've received the change!
-  expect(newDoc.name).toBe("from-hub");
+  expect(newDoc!.name).toBe('from-hub');
 
   // We don't send anything back, since we're all good now.
   expect(peerSendMsg.mock.calls.length).toBe(1); // we already sent one
 });
 
-test("we broadcast documents to peers we know about", () => {
+test('we broadcast documents to peers we know about', () => {
   const hubSendMsg = jest.fn();
   const hubBroadcastMsg = jest.fn();
   const hub = new Hub(hubSendMsg, hubBroadcastMsg);
 
   // We do this to register a peer
-  hub.applyMessage("our-peer", { clock: Map() }, init<any>());
-  expect(hub._theirClocks.get("our-peer")).toBeTruthy(); // sanity check
+  hub.applyMessage('our-peer', { clock: Map() }, init<any>());
+  expect(hub._theirClocks.get('our-peer')).toBeTruthy(); // sanity check
 
   // Then broadcast a doc
-  hub.notify(from({ name: "hi" }));
+  hub.notify(from({ name: 'hi' }));
 
   // We should call this peer
   expect(hubSendMsg.mock.calls.length).toBe(1);
   const [peer, msg] = hubSendMsg.mock.calls[0];
-  expect(peer).toEqual("our-peer");
+  expect(peer).toEqual('our-peer');
   expect(msg.changes).toBeTruthy();
 });
 
-test("the peer and the hub both make changes and come to agreement", () => {
+test('the peer and the hub both make changes and come to agreement', () => {
   const peerSendMsgFn = jest.fn();
   const peer = new Peer(peerSendMsgFn);
 
   // First, we send a doc to the hub from the peer
   // and they agree
-  let peerDoc = from({ title: "my title" });
+  let peerDoc = from<{ title: string }>({ title: 'my title' });
   peer.notify(peerDoc);
   const [msg] = peerSendMsgFn.mock.calls[0];
 
   const hubSendMsg = jest.fn();
   const hubBroadcastMsg = jest.fn();
   const hub = new Hub(hubSendMsg, hubBroadcastMsg);
-  let hubDoc = from<any>({ body: "my body" });
+  let hubDoc = from<any>({ body: 'my body' });
 
   // hub gets message from peer which applies title
-  hubDoc = hub.applyMessage("our-peer", msg, hubDoc);
-  expect(hubDoc.title).toBe("my title");
+  hubDoc = hub.applyMessage('our-peer', msg, hubDoc)!;
+  expect(hubDoc.title).toBe('my title');
 
   // hub tries to tell the peer about it's changes as well
   expect(hubSendMsg.mock.calls.length).toBe(1);
   const [peerId, hubMsg] = hubSendMsg.mock.calls[0];
-  expect(peerId).toBe("our-peer");
+  expect(peerId).toBe('our-peer');
   expect(hubMsg.changes).toBeTruthy();
 
   // meanwhile, the peer makes a change
   peerDoc = change(peerDoc, d => {
-    d.title = "revised title";
+    d.title = 'revised title';
   });
 
   // THEN receives the change from the hub
-  peerDoc = peer.applyMessage(hubMsg, peerDoc);
+  peerDoc = peer.applyMessage(hubMsg, peerDoc)!;
   expect(peerDoc).toEqual({
-    title: "revised title",
-    body: "my body"
+    title: 'revised title',
+    body: 'my body',
   });
 
   // The peer will then try to update the hub about it's changes.
@@ -204,14 +204,14 @@ test("the peer and the hub both make changes and come to agreement", () => {
   expect(lastMsg.changes).toBeTruthy();
 
   // Finally, the hub can apply the peer's in-between changes
-  hubDoc = hub.applyMessage("our-peer", lastMsg, hubDoc);
+  hubDoc = hub.applyMessage('our-peer', lastMsg, hubDoc)!;
   expect(hubDoc).toEqual(peerDoc);
 
   // And shouldn't send anything back.
   expect(hubSendMsg.mock.calls.length).toBe(1); // we've already sent one
 });
 
-test("We should only return something from applyMessage if we have a new doc", () => {
+test('We should only return something from applyMessage if we have a new doc', () => {
   const sendMsg = jest.fn();
   const broadcastMsg = jest.fn();
   const oldDoc = from({ count: 0 });
@@ -222,10 +222,10 @@ test("We should only return something from applyMessage if we have a new doc", (
 
   // 1. We get a new change from peer "george"
   hub.applyMessage(
-    "george",
+    'george',
     {
-      clock: getClock(georgesNewDoc),
-      changes: getChanges(oldDoc, georgesNewDoc)
+      clock: getClock(georgesNewDoc!),
+      changes: getChanges(oldDoc, georgesNewDoc),
     },
     oldDoc
   );
@@ -240,9 +240,9 @@ test("We should only return something from applyMessage if we have a new doc", (
   // that should be outdated, since we just applied george's
   // changes.
   const newDoc = hub.applyMessage(
-    "bob",
+    'bob',
     {
-      clock: getClock(from({ count: 0 }))
+      clock: getClock(from({ count: 0 })),
     },
     // We haven't finished our database write yet, so
     // from this perspective, we're still assuming this might

@@ -1,5 +1,5 @@
-import { Change } from "automerge";
-import { Map } from "immutable";
+import { Change } from 'automerge';
+import { Map } from 'immutable';
 
 export type Clock = Map<string, number>;
 

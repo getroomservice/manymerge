@@ -1,5 +1,5 @@
-import { union } from "automerge-clocks";
-import { Message } from "./types";
+import { union } from 'automerge-clocks';
+import { Message } from './types';
 
 /**
  * Squash messages together before applying them!
@@ -17,6 +17,6 @@ export function squash(msgOne: Message, msgTwo: Message) {
   const clock = union(msgOne.clock, msgTwo.clock);
   return {
     changes,
-    clock
+    clock,
   };
 }

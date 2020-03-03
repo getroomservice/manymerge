@@ -1,7 +1,7 @@
-import { applyChanges, Doc } from "automerge";
-import { getClock, later, recentChanges, union } from "automerge-clocks";
-import { Map, fromJS } from "immutable";
-import { Clock, Message } from "./types";
+import { applyChanges, Doc } from 'automerge';
+import { getClock, later, recentChanges, union } from 'automerge-clocks';
+import { Map, fromJS } from 'immutable';
+import { Clock, Message } from './types';
 
 /**
  * An Automerge Network protocol getting consensus
@@ -35,7 +35,11 @@ export class Hub {
     this._sendTo = sendMsgTo;
   }
 
-  public applyMessage<T>(peerId: string, msg: Message, doc: Doc<T>): Doc<T> {
+  public applyMessage<T>(
+    peerId: string,
+    msg: Message,
+    doc: Doc<T>
+  ): Doc<T> | undefined {
     let ourDoc = doc;
 
     // Convert clock to Immutable Map in case its been serialized
@@ -54,7 +58,7 @@ export class Hub {
         // We make the assumption that if someone's sent the hub
         // changes, they likely want those changes to be sent to
         // everyone else.
-        changes: msg.changes
+        changes: msg.changes,
       });
 
       ourDoc = applyChanges(doc, msg.changes);
@@ -67,7 +71,7 @@ export class Hub {
     if (ourChanges.length > 0) {
       this.sendMsgTo(peerId, {
         clock: getClock(ourDoc),
-        changes: ourChanges
+        changes: ourChanges,
       });
     }
 
@@ -76,7 +80,7 @@ export class Hub {
     // them to send us changes via 2. listed above.
     if (later(msgClock, this._ourClock)) {
       this.broadcastMsg({
-        clock: this._ourClock
+        clock: this._ourClock,
       });
     }
 
@@ -85,6 +89,8 @@ export class Hub {
     if (msg.changes) {
       return ourDoc;
     }
+
+    return;
   }
 
   public notify<T>(doc: Doc<T>) {
@@ -95,12 +101,15 @@ export class Hub {
     this._ourClock = union(this._ourClock, getClock(doc));
 
     // 1. If we have folks we're tracking, send them changes if needed.
+    // @ts-ignore
     this._theirClocks.forEach((clock, peerId) => {
+      if (!clock) return;
+      if (!peerId) return;
       const ourChanges = recentChanges(doc, clock);
       if (ourChanges.length > 0) {
         this.sendMsgTo(peerId, {
           clock: getClock(doc),
-          changes: ourChanges
+          changes: ourChanges,
         });
       }
     });
@@ -109,7 +118,7 @@ export class Hub {
     // If our copy of "theirClock" is wrong, they'll
     // update us via 3. in 'applyMessage'.
     this.broadcastMsg({
-      clock: getClock(doc)
+      clock: getClock(doc),
     });
   }
 
@@ -133,7 +142,7 @@ export class Hub {
 
     // Todo: maybe do this asynchronously to not block in big rooms?
     this._theirClocks = this._theirClocks.map(clock => {
-      return union(clock, msg.clock);
-    });
+      return union(clock!, msg.clock);
+    }) as Map<string, Clock>;
   }
 }

@@ -1,14 +1,14 @@
-import { change, init } from "automerge";
-import { Peer } from "./peer";
+import { change, init } from 'automerge';
+import { Peer } from './peer';
 
-test("our protocol will send and receive changes", () => {
+test('our protocol will send and receive changes', () => {
   const clientSendMsg = jest.fn();
   const client = new Peer(clientSendMsg);
 
   // send an update
   client.notify(
     change(init<any>(), doc => {
-      doc.name = "my-doc";
+      doc.name = 'my-doc';
     })
   );
 

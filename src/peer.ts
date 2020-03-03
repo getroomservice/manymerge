@@ -1,7 +1,7 @@
-import { applyChanges, Doc } from "automerge";
-import { getClock, later, recentChanges, union } from "automerge-clocks";
-import { Map, fromJS } from "immutable";
-import { Message } from "./types";
+import { applyChanges, Doc } from 'automerge';
+import { getClock, later, recentChanges, union } from 'automerge-clocks';
+import { Map, fromJS } from 'immutable';
+import { Message } from './types';
 
 /**
  * An Automerge Network protocol getting consensus
@@ -16,7 +16,7 @@ export class Peer {
     this._sendMsg = sendMsg;
   }
 
-  public applyMessage<T>(msg: Message, doc: Doc<T>): Doc<T> {
+  public applyMessage<T>(msg: Message, doc: Doc<T>): Doc<T> | undefined {
     let ourDoc = doc;
 
     // Convert msg clock to Immutable Map incase its been serialized
@@ -33,7 +33,7 @@ export class Peer {
     if (ourChanges.length > 0) {
       this.sendMsg({
         clock: getClock(ourDoc),
-        changes: ourChanges
+        changes: ourChanges,
       });
     }
 
@@ -43,13 +43,15 @@ export class Peer {
     const ourClock = getClock(ourDoc);
     if (later(msgClock, ourClock)) {
       this.sendMsg({
-        clock: ourClock
+        clock: ourClock,
       });
     }
 
     if (msg.changes) {
       return ourDoc;
     }
+
+    return;
   }
 
   public notify<T>(doc: Doc<T>) {
@@ -58,7 +60,7 @@ export class Peer {
     if (ourChanges.length > 0) {
       this.sendMsg({
         clock: getClock(doc),
-        changes: ourChanges
+        changes: ourChanges,
       });
       return;
     }
@@ -67,7 +69,7 @@ export class Peer {
     // If our copy of "theirClock" is wrong, they'll
     // update us via 3. in 'applyMessage'.
     this.sendMsg({
-      clock: getClock(doc)
+      clock: getClock(doc),
     });
   }
 
