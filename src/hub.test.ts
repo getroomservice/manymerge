@@ -251,3 +251,48 @@ test('We should only return something from applyMessage if we have a new doc', (
   );
   expect(newDoc).toBeFalsy(); // TODO: maybe make these return nothing?
 });
+
+test('The hub works synchronously', () => {
+  let hubDoc = init();
+  const peerById: { [peerId: string]: Peer } = {};
+  const peerDocById: { [peerId: string]: any } = {
+    peer1: init(),
+    peer2: init(),
+  };
+
+  const hub = new Hub(
+    (peerId: string, msg: Message) => {
+      const newDoc = peerById[peerId].applyMessage(msg, peerDocById[peerId]);
+
+      if (newDoc) {
+        peerDocById[peerId] = newDoc;
+      }
+    },
+    msg => {
+      for (const peerId of Object.keys(peerById)) {
+        const peer = peerById[peerId];
+
+        const newDoc = peer.applyMessage(msg, peerDocById[peerId]);
+
+        if (newDoc) {
+          peerDocById[peerId] = newDoc;
+        }
+      }
+    }
+  );
+
+  peerById['peer1'] = new Peer(msg => {
+    const newDoc = hub.applyMessage('peer1', msg, hubDoc);
+
+    if (newDoc) {
+      hubDoc = newDoc;
+    }
+  });
+  peerById['peer2'] = new Peer(msg => {
+    const newDoc = hub.applyMessage('peer2', msg, hubDoc);
+
+    if (newDoc) {
+      hubDoc = newDoc;
+    }
+  });
+});
