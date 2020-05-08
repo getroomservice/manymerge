@@ -253,7 +253,7 @@ test('We should only return something from applyMessage if we have a new doc', (
 });
 
 test('The hub works synchronously', () => {
-  type TestDoc = {title:string}
+  type TestDoc = { title: string };
 
   let hubDoc = init<TestDoc>();
   const peerById: { [peerId: string]: Peer } = {};
@@ -298,8 +298,8 @@ test('The hub works synchronously', () => {
     }
   });
 
-  peerDocById['peer1'] = change(peerDocById['peer1'], d => d.title = 'hello')
-  peerById['peer1'].notify(peerDocById['peer1'])
+  peerDocById['peer1'] = change(peerDocById['peer1'], d => (d.title = 'hello'));
+  peerById['peer1'].notify(peerDocById['peer1']);
 
   expect(hubDoc).toEqual(peerDocById['peer1']);
   expect(hubDoc).toEqual(peerDocById['peer2']);
