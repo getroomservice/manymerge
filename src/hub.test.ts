@@ -1,4 +1,4 @@
-import { change, from, getChanges, init } from 'automerge';
+import { change, from, getChanges, init, Doc } from 'automerge';
 import { getClock } from 'automerge-clocks';
 import { Map } from 'immutable';
 import { Hub } from './hub';
@@ -253,11 +253,13 @@ test('We should only return something from applyMessage if we have a new doc', (
 });
 
 test('The hub works synchronously', () => {
-  let hubDoc = init();
+  type TestDoc = {title:string}
+
+  let hubDoc = init<TestDoc>();
   const peerById: { [peerId: string]: Peer } = {};
-  const peerDocById: { [peerId: string]: any } = {
-    peer1: init(),
-    peer2: init(),
+  const peerDocById: { [peerId: string]: Doc<TestDoc> } = {
+    peer1: init<TestDoc>(),
+    peer2: init<TestDoc>(),
   };
 
   const hub = new Hub(
@@ -295,4 +297,10 @@ test('The hub works synchronously', () => {
       hubDoc = newDoc;
     }
   });
+
+  peerDocById['peer1'] = change(peerDocById['peer1'], d => d.title = 'hello')
+  peerById['peer1'].notify(peerDocById['peer1'])
+
+  expect(hubDoc).toEqual(peerDocById['peer1']);
+  expect(hubDoc).toEqual(peerDocById['peer2']);
 });
