@@ -50,6 +50,12 @@ export class Hub {
 
     // 1. If they've sent us changes, we'll try to apply them.
     if (msg.changes) {
+      // We apply changes locally and update our clock before broadcasting.
+      // This way, in case the broadcast causes new messages to be delivered to us
+      // synchronously, our clock is uptodate.
+      ourDoc = applyChanges(doc, msg.changes);
+      this._ourClock = getClock(ourDoc);
+
       // We broadcast FIRST for the other members of the hub
       // Since we'll assume these changes should be applied to everyone.
       this.broadcastMsg({
@@ -60,9 +66,6 @@ export class Hub {
         // everyone else.
         changes: msg.changes,
       });
-
-      ourDoc = applyChanges(doc, msg.changes);
-      this._ourClock = getClock(ourDoc);
     }
 
     // 2. If we have any changes to let them know about,
