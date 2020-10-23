@@ -1,5 +1,5 @@
 {
-  "name": "manymerge",
+  "name": "@skokenes/manymerge",
   "version": "2.5.5",
   "license": "MIT",
   "main": "dist/index.js",

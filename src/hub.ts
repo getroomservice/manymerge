@@ -1,4 +1,4 @@
-import { applyChanges, Doc } from 'automerge';
+import { applyChanges, Doc, getChanges } from 'automerge';
 import { getClock, later, recentChanges, union } from 'automerge-clocks';
 import { Map, fromJS } from 'immutable';
 import { Clock, Message } from './types';
@@ -54,18 +54,23 @@ export class Hub {
       // This way, in case the broadcast causes new messages to be delivered to us
       // synchronously, our clock is uptodate.
       ourDoc = applyChanges(doc, msg.changes);
+      // Determine the net new changes for the hub's doc based on the incoming message
+      const newChanges = getChanges(doc, ourDoc);
       this._ourClock = getClock(ourDoc);
 
       // We broadcast FIRST for the other members of the hub
       // Since we'll assume these changes should be applied to everyone.
-      this.broadcastMsg({
-        clock: getClock(ourDoc),
+      // We only broadcast any changes that are new to this hub
+      if (newChanges.length > 0) {
+        this.broadcastMsg({
+          clock: getClock(ourDoc),
 
-        // We make the assumption that if someone's sent the hub
-        // changes, they likely want those changes to be sent to
-        // everyone else.
-        changes: msg.changes,
-      });
+          // We make the assumption that if someone's sent the hub
+          // changes, they likely want those changes to be sent to
+          // everyone else.
+          changes: newChanges,
+        });
+      }
     }
 
     // 2. If we have any changes to let them know about,
