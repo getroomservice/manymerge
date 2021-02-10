@@ -47,8 +47,10 @@ export class Hub {
     // Pull out all the clocks and merge all the changes
     for (var i = 0; i < msgs.length; i++) {
       const call = msgs[i];
-      peerClocks.set(call.peerId, call.msg.clock);
-      this._theirClocks = this._theirClocks.set(call.peerId, call.msg.clock);
+      // Convert clock to Immutable Map in case its been serialized
+      const msgClock = fromJS(call.msg.clock);
+      peerClocks.set(call.peerId, msgClock);
+      this._theirClocks = this._theirClocks.set(call.peerId, msgClock);
       combinedChanges = combinedChanges.concat(call.msg.changes ?? []);
     }
 
@@ -232,11 +234,15 @@ export class Hub {
 
     this._ourClock = msg.clock;
 
+    this._theirClocks = this._theirClocks.map(clock => {
+      return union(clock!, msg.clock);
+    }) as Map<string, Clock>;
+
     // Update their clocks on next loop
-    setTimeout(() => {
-      this._theirClocks = this._theirClocks.map(clock => {
-        return union(clock!, msg.clock);
-      }) as Map<string, Clock>;
-    }, 0);
+    // setTimeout(() => {
+    //   this._theirClocks = this._theirClocks.map(clock => {
+    //     return union(clock!, msg.clock);
+    //   }) as Map<string, Clock>;
+    // }, 0);
   }
 }

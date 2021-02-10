@@ -221,31 +221,31 @@ async function runBenchmarks() {
 
   perfObserver.observe({ entryTypes: ['measure'], buffered: true });
 
-  await benchmarkNInserts(1);
+  // await benchmarkNInserts(1);
 
-  await benchmarkNInserts(10);
+  // await benchmarkNInserts(10);
 
-  await benchmarkNInserts(100);
+  // await benchmarkNInserts(100);
 
-  await benchmarkNInserts(500);
+  // await benchmarkNInserts(500);
 
-  await benchmarkNInserts(1000);
+  // await benchmarkNInserts(1000);
   benchmarkNInserts;
   benchmarkNPeersMInserts;
   benchmarkNHubsMInserts;
 
-  await benchmarkNPeersMInserts(1, 1);
-  await benchmarkNPeersMInserts(10, 1);
-  await benchmarkNPeersMInserts(100, 1);
+  // await benchmarkNPeersMInserts(1, 1);
+  // await benchmarkNPeersMInserts(10, 1);
+  // await benchmarkNPeersMInserts(100, 1);
   // why is this one crapping out at a lot of peers for a single hub?
   // It seems to perform ok, but it takes forever for it to get changes back. Like we get double changes (I think because of clocks?). So 300 peers yields 600 change callbacks
-  // await benchmarkNPeersMInserts(300, 1);
+  await benchmarkNPeersMInserts(300, 1);
 
-  await benchmarkNHubsMInserts(1, 1);
-  await benchmarkNHubsMInserts(10, 1);
-  await benchmarkNHubsMInserts(100, 1);
-  await benchmarkNHubsMInserts(500, 1);
-  await benchmarkNHubsMInserts(1000, 1);
+  // await benchmarkNHubsMInserts(1, 1);
+  // await benchmarkNHubsMInserts(10, 1);
+  // await benchmarkNHubsMInserts(100, 1);
+  // await benchmarkNHubsMInserts(500, 1);
+  // await benchmarkNHubsMInserts(1000, 1);
 }
 
 runBenchmarks();
