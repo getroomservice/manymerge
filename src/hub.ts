@@ -1,6 +1,6 @@
 import { applyChanges, Change, Doc, getChanges } from 'automerge';
 import { getClock, later, recentChanges, union } from 'automerge-clocks';
-import { Map, fromJS } from 'immutable';
+import { Map as IMap, fromJS } from 'immutable';
 import { Clock, Message } from './types';
 
 /**
@@ -19,7 +19,7 @@ export class Hub {
 
   // This is just an in-memory cache of where a peer is.
   // TODO: we may want to automatically get rid of items from this cache.
-  _theirClocks: Map<string, Clock>;
+  _theirClocks: IMap<string, Clock>;
   _broadcast: (msg: Message) => void;
   _sendTo: (peerId: string, msg: Message) => void;
 
@@ -29,8 +29,8 @@ export class Hub {
     // Send to everyone
     broadcastMsg: (msg: Message) => void
   ) {
-    this._ourClock = Map();
-    this._theirClocks = Map();
+    this._ourClock = IMap();
+    this._theirClocks = IMap();
     this._broadcast = broadcastMsg;
     this._sendTo = sendMsgTo;
   }
@@ -40,7 +40,7 @@ export class Hub {
     doc: Doc<T>
   ): Doc<T> | undefined {
     // Keep a list of the peer clocks in this message buffer
-    const peerClocks = Map<string, Clock>();
+    const peerClocks = new Map<string, Clock>();
     // A merge of all changes in the buffer
     let combinedChanges: Change[] = [];
 
@@ -219,7 +219,7 @@ export class Hub {
   private sendMsgTo(peerId: string, msg: Message) {
     // Whenever we send a message, we should optimistically
     // update theirClock with what we're about to send them.
-    const theirClock = this._theirClocks.get(peerId, Map<string, number>());
+    const theirClock = this._theirClocks.get(peerId, IMap<string, number>());
     this._theirClocks = this._theirClocks.set(
       peerId,
       union(theirClock, msg.clock)
@@ -236,7 +236,7 @@ export class Hub {
 
     this._theirClocks = this._theirClocks.map(clock => {
       return union(clock!, msg.clock);
-    }) as Map<string, Clock>;
+    }) as IMap<string, Clock>;
 
     // Update their clocks on next loop
     // setTimeout(() => {

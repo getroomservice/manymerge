@@ -73,10 +73,6 @@ class TestHub {
 
     peerToHubBuffer.subscribe(msg => {
       this.hubMsgBufferInput.next({ peerId: id, msg: msg });
-      // let doc = this.hub.applyMessage(id, msg, this.hubDoc);
-      // if (doc) {
-      //   this.hubDoc = doc;
-      // }
     });
 
     let peerDoc = Automerge.from<any>({});
@@ -91,6 +87,8 @@ class TestHub {
         onNewDoc(peerDoc);
       }
     });
+
+    peer.notify(peerDoc);
 
     return {
       change: (changeFn: (doc: any) => any) => {
